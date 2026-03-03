@@ -41,7 +41,7 @@ int cdvdInit(int mode)
     }
 	while(!cdvdCd.server);
 
-    pkt = sendBuffer; 
+    pkt = (u8 *)sendBuffer; 
     PUSHDATA( int, pkt, mode, i);
     pkt += i; len += i;
 

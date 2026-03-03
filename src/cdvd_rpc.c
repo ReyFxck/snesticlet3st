@@ -104,7 +104,8 @@ int CDVD_getdir(const char* pathname, const char* extensions, enum CDVD_getMode 
 	num_entries = sbuff[0];
 
 	if (new_pathname != NULL)
-		strncpy(new_pathname,(char*)&sbuff[1],1023);
+		strncpy(new_pathname, (char *)&sbuff[1], 1023);
+                new_pathname[1023] = '\0';
 
 	return (num_entries);
 }
