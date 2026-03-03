@@ -73,7 +73,7 @@ int MCSave_WriteSync(int bSync, int *pResult)
 
 int MCSave_Write(char *pFileName, char *pData, int nBytes)
 {
-    int i;
+    int i __attribute__((unused));
     (void)i;
     SifDmaTransfer_t sdt;
 

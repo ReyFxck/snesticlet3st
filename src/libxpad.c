@@ -220,7 +220,7 @@ unsigned int xpadGetFrameCount(int port, int slot)
 int
 xpadInit(int a)
 {
-    int ver;
+    int ver __attribute__((unused));
     (void)ver;
     int i;
 

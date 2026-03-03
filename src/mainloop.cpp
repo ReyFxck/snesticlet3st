@@ -1208,8 +1208,8 @@ static int _MainLoopMenuEvent(Uint32 Type, Uint32 Parm1, void *Parm2)
 	{
 		case 1:
 			{
-				char mc0[256];
-				char mc1[256];
+				char mc0[1024];
+				char mc1[1024];
 				char exploit_dir[256];
 				char **ppInstallFiles = _MainLoop_pInstallFiles;
 
@@ -1470,7 +1470,7 @@ static Bool _MainLoopConfigureNetwork(char **ppSearchPaths, char *pConfigFileNam
 	{
 		if (strlen(*ppSearchPaths) > 0)
 		{
-		    char Path[256];
+		    char Path[1024];
 
         	sprintf(Path, "%s%s", *ppSearchPaths, pConfigFileName);
 

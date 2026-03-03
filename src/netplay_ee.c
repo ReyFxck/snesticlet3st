@@ -48,7 +48,7 @@ void NetPlayPuts(char *format, ...)
 {
 	static char buff[4096];
     va_list args;
-    int rv;
+    int rv __attribute__((unused));
     (void)rv;
 
 	if(!netplay_inited) return;
