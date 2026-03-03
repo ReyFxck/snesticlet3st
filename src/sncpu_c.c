@@ -900,7 +900,7 @@ Int32 SNCPUExecute_C(SNCpuT *pCpu)
 		break;
 
 	SNCPU_OP_ALL(0x42)
-		Uint32 uDestBank;
+		Uint32 uDestBank __attribute__((unused));
 		SNCPU_FETCH8(uDestBank);
 		SNCPU_SUBCYCLES(2);
 		break;

@@ -194,9 +194,9 @@ void SnesDMAC::ProcessMDMAChRead(Uint32 uChan)
 	Int32 iTransfer=0;
 
     // any cycles available?
-    if (m_pCPU->Cycles <= 0)
+    if (m_pCPU->Cycles <= 0) {
         return;
-
+    }
 	// determine a-bus increment
 	uSrcDelta = _SNDma_MDMAInc[(pChan->dmapx>>3) & 3];
 
@@ -439,10 +439,9 @@ void SnesDMAC::ProcessMDMAChFast(Uint32 uChan)
 #endif
 
     // any cycles available?
-    if (m_pCPU->Cycles <= 0)
+    if (m_pCPU->Cycles <= 0) {
         return;
-
-
+    }
 	if (pChan->dmapx & 0x80)
 	{
 		// ppu -> mem
