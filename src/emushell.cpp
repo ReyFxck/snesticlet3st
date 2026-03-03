@@ -232,7 +232,7 @@ EmuShellSysT *CEmuShell::FindSysByExt(char *pExt)
 		for (uExt=0; uExt < pRom->GetNumExts(); uExt++)
 		{
 #ifdef _EE
-			if (!strncmp(pExt, pRom->GetExtName(uExt), sizeof(pExt)))
+			if (!strcmp(pExt, pRom->GetExtName(uExt)))
 #else
 			if (!stricmp(pExt, pRom->GetExtName(uExt)))
 #endif

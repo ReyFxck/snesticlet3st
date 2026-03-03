@@ -707,7 +707,7 @@ static void _SNDisasm(SNDOpStreamT *pOpStream, char *pStr)
 {
     SNDSPCInstDefT *pInstDef;
     Uint8 uOpcode;
-    char *pMnemonic;
+    const char *pMnemonic;
     char strOperand0[32];
     char strOperand1[32];
 

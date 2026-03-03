@@ -651,7 +651,7 @@ static void _SNDisasm(SNDOpStreamT *pOpStream, char *pStr, Uint8 *pFlags)
 {
     SNDInstDefT *pInstDef;
     Uint8 uOpcode;
-    char *pMnemonic;
+    const char *pMnemonic;
     char strOperand[32];
 
     // fetch instruction opcode    

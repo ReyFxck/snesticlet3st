@@ -1219,7 +1219,7 @@ static int _MainLoopMenuEvent(Uint32 Type, Uint32 Parm1, void *Parm2)
 				sprintf(mc1, "mc1:/%s", exploit_dir);
 
 				// hack in default destination name for elf
-				ppInstallFiles[0] = "BOOT.ELF"; // dest
+				ppInstallFiles[0] = (char *)"BOOT.ELF"; // dest
 				switch (Parm1)
 				{
 #if 0					
@@ -1234,21 +1234,21 @@ static int _MainLoopMenuEvent(Uint32 Type, Uint32 Parm1, void *Parm2)
 						break;
 #endif
 					case 2:
-						ppInstallFiles[1] = "SNESTICLE.ELF"; // src
-						InstallFiles(mc0, "host:", ppInstallFiles, _MainLoopInstallCallback);
+						ppInstallFiles[1] = (char *)"SNESTICLE.ELF"; // src
+						InstallFiles(mc0, (char *)"host:", ppInstallFiles, _MainLoopInstallCallback);
 						break;
 					case 3:
-						ppInstallFiles[1] = "BOOT.ELF"; // src
+						ppInstallFiles[1] = (char *)"BOOT.ELF"; // src
 						InstallFiles(mc1, mc0, ppInstallFiles, _MainLoopInstallCallback);
 						break;
 					case 4:
-						ppInstallFiles[1] = "BOOT.ELF"; // src
+						ppInstallFiles[1] = (char *)"BOOT.ELF"; // src
 						InstallFiles(mc0, mc1, ppInstallFiles, _MainLoopInstallCallback);
 						break;
 					case 5:
-						ppInstallFiles[0] = "SNESTICLE.ELF"; // dest
-						ppInstallFiles[1] = "BOOT.ELF"; // src
-						InstallFiles("host:", mc0, ppInstallFiles, _MainLoopInstallCallback);
+						ppInstallFiles[0] = (char *)"SNESTICLE.ELF"; // dest
+						ppInstallFiles[1] = (char *)"BOOT.ELF"; // src
+						InstallFiles((char *)"host:", mc0, ppInstallFiles, _MainLoopInstallCallback);
 						break;
 					case 6:
 						_DumpMemory();
@@ -1262,7 +1262,7 @@ static int _MainLoopMenuEvent(Uint32 Type, Uint32 Parm1, void *Parm2)
 						list_title_db(mc0);
 						break;
 					case 9: // copy rom0:libsd -> host
-						CopyFile("host:LIBSD.IRX", "rom0:LIBSD", NULL);
+						CopyFile((char *)"host:LIBSD.IRX", (char *)"rom0:LIBSD", NULL);
 						break;
 					default:
 						return 0;
@@ -1595,7 +1595,7 @@ static void _MainLoopLoadModules(Char **ppSearchPaths)
 	// configure network if we started it ourselves
 	if (bLoadedNetwork)
 	{
-		_MainLoopConfigureNetwork(_MainLoop_NetConfigPaths, "ipconfig.dat");
+		_MainLoopConfigureNetwork(_MainLoop_NetConfigPaths, (char *)"ipconfig.dat");
 	}
 
 	// load netplay module
@@ -1924,8 +1924,8 @@ Bool MainLoopInit()
 #if 0
 	_MainLoopSetPalette(NESPAL_FCEU);
 #endif
-	PathExtAdd(MAINLOOP_ENTRYTYPE_GZ,  "gz");
-	PathExtAdd(MAINLOOP_ENTRYTYPE_ZIP, "zip");
+	PathExtAdd(MAINLOOP_ENTRYTYPE_GZ, (char *)"gz");
+	PathExtAdd(MAINLOOP_ENTRYTYPE_ZIP, (char *)"zip");
 
 
 	SNPPUColorCalibrate(&_ColorCalib);
@@ -1940,7 +1940,7 @@ Bool MainLoopInit()
 		PathExtAdd(MAINLOOP_ENTRYTYPE_SNESROM, _pSnesRom->GetExtName(iExt));
 	}
 
-	PathExtAdd(MAINLOOP_ENTRYTYPE_SNESPALETTE, "snpal");
+	PathExtAdd(MAINLOOP_ENTRYTYPE_SNESPALETTE, (char *)"snpal");
 #if 0
 	_pNes = new NesSystem();
 	_pNes->Reset();

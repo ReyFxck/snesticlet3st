@@ -194,7 +194,7 @@ int get_next_title(FILE *f, char *title, int *offset)
 				s++;
 
 			*s = '\0';
-			strncpy(title, entry, TITLE_MAX);
+			strncpy(title, entry, TITLE_MAX - 1); title[TITLE_MAX - 1] = '\0';
 
 		}
 

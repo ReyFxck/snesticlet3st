@@ -87,7 +87,7 @@ Int32 FontGetStrWidth(const Char *pStr)
     {
 		if (*pStr != ' ') 
 		{
-            FontCharT *pFontChar = &pFont->CharMap[*pStr];
+            FontCharT *pFontChar = &pFont->CharMap[(unsigned char)*pStr];
 			iWidth += (pFontChar->u1 - pFontChar->u0) + 1;
 		} else
         {
@@ -116,7 +116,7 @@ static void _FontDrawStr(FontT *pFont, Float32 vx, Float32 vy, Float32 vz, const
 		{
             //if (*pStr < pFont->nChars)
             {
-                FontCharT *pFontChar = &pFont->CharMap[*pStr];
+                FontCharT *pFontChar = &pFont->CharMap[(unsigned char)*pStr];
                 Int32 iWidth;
 
                 iWidth =_FontDrawChar(  pFontChar, vx, vy, vz, uColor,	*pStr) + 1;
