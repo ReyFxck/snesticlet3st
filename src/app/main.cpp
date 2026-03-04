@@ -41,21 +41,30 @@ char *MainGetBootPath()
 
 void MainSetBootDir(const char *pPath)
 {
-	int i;
-	strcpy(_Main_BootDir, pPath);
+  if (!pPath) { _Main_BootDir[0] = 0; return; }
 
-	i = strlen(_Main_BootDir);
+  // copia com limite
+  strncpy(_Main_BootDir, pPath, sizeof(_Main_BootDir)-1);
+  _Main_BootDir[sizeof(_Main_BootDir)-1] = 0;
 
-	// search backward for start of filename
-	while (i>0 
-			&& _Main_BootDir[i]!='/'
-			&& _Main_BootDir[i]!='\\'
-			&& _Main_BootDir[i]!=':'
-		) i--;
+  // remove ;1 (cdrom) se existir
+  char *semi = strchr(_Main_BootDir, ';');
+  if (semi) *semi = 0;
 
-	i++;
+  // procura ultima barra / ou barra invertida
+  char *s1 = strrchr(_Main_BootDir, '/');
+  char *s2 = strrchr(_Main_BootDir, '\\');
+  char *sep = s1;
+  if (s2 && (!sep || s2 > sep)) sep = s2;
 
-	_Main_BootDir[i] = 0;
+  if (sep) {
+    *(sep+1) = 0; // mantém a barra
+    return;
+  }
+
+  // sem barra: vira "device:"
+  char *col = strchr(_Main_BootDir, ':');
+  if (col) *(col+1) = 0;
 }
 
 /* Reset the IOP and all of its subsystems.  */
@@ -173,22 +182,31 @@ static int MainLoadIrxFromBootDirOne(const char *name)
 
     if (!dir || !*dir) return -1;
 
+    // helper: tenta sem ;1 e com ;1
+    auto try_exec = [&](const char *p)->int {
+        if (MainExecModuleFile(p) >= 0) return 0;
+        char p1[520];
+        snprintf(p1, sizeof(p1), "%s;1", p);
+        if (MainExecModuleFile(p1) >= 0) return 0;
+        return -1;
+    };
+
     // 1) como veio
     snprintf(path, sizeof(path), "%s%s", dir, name);
-    if (MainExecModuleFile(path) >= 0) return 0;
+    if (try_exec(path) == 0) return 0;
 
     // 2) lower
     _str_to_lower(low, sizeof(low), name);
-    if (low[0] && low != name) {
+    if (low[0]) {
         snprintf(path, sizeof(path), "%s%s", dir, low);
-        if (MainExecModuleFile(path) >= 0) return 0;
+        if (try_exec(path) == 0) return 0;
     }
 
     // 3) UPPER
     _str_to_upper(up, sizeof(up), name);
-    if (up[0] && up != name) {
+    if (up[0]) {
         snprintf(path, sizeof(path), "%s%s", dir, up);
-        if (MainExecModuleFile(path) >= 0) return 0;
+        if (try_exec(path) == 0) return 0;
     }
 
     return -1;

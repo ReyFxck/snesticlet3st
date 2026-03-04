@@ -169,3 +169,56 @@ list:
 count:
 	@printf 'sources: %s\n' "$(words $(SRCS))"
 	@printf 'objects: %s\n' "$(words $(OBJS))"
+
+
+# ---------------- ISO (CD/DVD) ----------------
+ISO_LABEL ?= SNESTICLE
+ISO_OUT   ?= $(OBJ_DIR)/$(ISO_LABEL).iso
+ISO_DIR   ?= $(OBJ_DIR)/iso_root
+BOOT_ELF  ?= $(ISO_LABEL).ELF
+VMODE     ?= NTSC
+VER       ?= 1.00
+
+# tenta achar uma ferramenta tipo mkisofs
+MKISOFS ?= $(shell if command -v xorriso >/dev/null 2>&1; then echo "xorriso -as mkisofs"; \
+	elif command -v genisoimage >/dev/null 2>&1; then echo "genisoimage"; \
+	elif command -v mkisofs >/dev/null 2>&1; then echo "mkisofs"; \
+	else echo "mkisofs"; fi)
+
+MKISOFSFLAGS ?= -J -R -l -iso-level 2
+
+.PHONY: iso iso_stage iso_image
+
+iso: package iso_stage iso_image
+	@echo "ISO pronta: $(ISO_OUT)"
+
+iso_stage: | $(OBJ_DIR)
+	@set -e; \
+	rm -rf "$(ISO_DIR)"; \
+	mkdir -p "$(ISO_DIR)"; \
+	echo "[ISO] copiando arquivos do pkg..."; \
+	cp -a "$(PKG_DIR)/." "$(ISO_DIR)/"; \
+	# renomeia o ELF de boot para MAIUSCULO (padrao de disco)
+	if [ -f "$(ISO_DIR)/SNESticle.elf" ]; then \
+		mv "$(ISO_DIR)/SNESticle.elf" "$(ISO_DIR)/$(BOOT_ELF)"; \
+	elif [ -f "$(ISO_DIR)/SNESticle.ELF" ]; then \
+		mv "$(ISO_DIR)/SNESticle.ELF" "$(ISO_DIR)/$(BOOT_ELF)"; \
+	fi; \
+	# cria SYSTEM.CNF (na raiz) - ordem BOOT2/VER/VMODE
+	printf "BOOT2 = cdrom0:\\%s;1\r\nVER = %s\r\nVMODE = %s\r\n" "$(BOOT_ELF)" "$(VER)" "$(VMODE)" > "$(ISO_DIR)/SYSTEM.CNF"; \
+	echo "[ISO] SYSTEM.CNF:"; \
+	cat "$(ISO_DIR)/SYSTEM.CNF"; \
+	echo "[ISO] ISO_DIR=$(ISO_DIR)"
+
+iso_image:
+	@set -e; \
+	echo "[ISO] gerando $(ISO_OUT) com: $(MKISOFS) $(MKISOFSFLAGS)"; \
+	$(MKISOFS) $(MKISOFSFLAGS) -V "$(ISO_LABEL)" -o "$(ISO_OUT)" "$(ISO_DIR)"; \
+	# se existir ps2bootgen no sistema, roda (opcional)
+	if command -v ps2bootgen >/dev/null 2>&1; then \
+		echo "[ISO] ps2bootgen detectado: aplicando licenca (opcional)"; \
+		ps2bootgen -dvd -japan "$(ISO_OUT)"; \
+	else \
+		echo "[ISO] ps2bootgen nao encontrado (ok para OPL/emulador)"; \
+	fi
+# -------------- /ISO -----------------
