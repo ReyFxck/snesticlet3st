@@ -808,8 +808,7 @@ int explode ()
 }
 
 
-int ReadByte(x)
-    UWORD *x;
+int ReadByte(UWORD *x)
 {
     /*
      * read a byte; return 8 if byte available, 0 if not
