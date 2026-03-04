@@ -12,6 +12,8 @@ CFLAGS   := -G0 -O2 -Wall -D_EE -DPS2 -DLSB_FIRST -DALIGN_DWORD -DCODE_PLATFORM=
 CXXFLAGS := -G0 -O2 -Wall -fno-exceptions -fno-rtti -D_EE -DPS2 -DLSB_FIRST -DALIGN_DWORD -DCODE_PLATFORM=3
 
 INCS := \
+-I$(CURDIR)/src/platform/ps2/gs \
+-I$(CURDIR)/src/platform/ps2/lowlevel \
 -I$(CURDIR)/src/platform/ps2 \
 -I$(CURDIR)/src/platform/ps2/ui \
 -I$(CURDIR)/src/platform/ps2/system \

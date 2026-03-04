@@ -15,12 +15,12 @@ src/third_party/unzip/explode.c
 src/file.c
 src/font_04b16b.c
 src/font.cpp
-src/gpfifo.c
-src/gpprim.c
-src/gs.c
-src/gslist.c
+src/platform/ps2/gs/gpfifo.c
+src/platform/ps2/gs/gpprim.c
+src/platform/ps2/gs/gs.c
+src/platform/ps2/gs/gslist.c
 src/third_party/zlib/gzio.c
-src/hw.s
+src/platform/ps2/lowlevel/hw.s
 src/third_party/zlib/infblock.c
 src/third_party/zlib/infcodes.c
 src/third_party/zlib/inffast.c
@@ -29,8 +29,8 @@ src/third_party/zlib/inftrees.c
 src/third_party/zlib/infutil.c
 src/platform/ps2/input/input.c
 src/inputdevice.cpp
-src/libxmtap.c
-src/libxpad.c
+src/platform/ps2/lowlevel/libxmtap.c
+src/platform/ps2/lowlevel/libxpad.c
 src/main.cpp
 src/platform/ps2/system/mainloop.cpp
 src/modules/mcsave/mcsave_ee.c
@@ -44,7 +44,7 @@ src/poly.cpp
 src/prof.c
 src/profctr.c
 src/proflog.c
-src/ps2dma.c
+src/platform/ps2/lowlevel/ps2dma.c
 src/rendersurface.cpp
 src/sjpcmbuffer.cpp
 src/modules/sjpcm/sjpcm_rpc.c
