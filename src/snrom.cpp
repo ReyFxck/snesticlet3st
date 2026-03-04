@@ -13,14 +13,14 @@
 
 struct SNRomCountryT
 {
-	char		*pName;
+	const char *pName;
 	SNRomVideoE eVideoType;
 };
 
 struct SNRomLicenseT
 {
 	Uint8	uCode;
-	char	*pName;
+	const char *pName;
 };
 
 
