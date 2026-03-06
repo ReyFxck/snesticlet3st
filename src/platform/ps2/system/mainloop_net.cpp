@@ -18,6 +18,64 @@ extern "C" {
 }
 
 
+extern Bool _MainLoopExecuteFile(const char *pFileName, Bool bLoadSRAM);
+extern void _MainLoopUnloadRom();
+extern void _MenuEnable(Bool bEnable);
+
+void *_MainLoopNetCallback(NetPlayCallbackE eCallback, char *data, int size)
+{
+    switch (eCallback)
+    {
+        case NETPLAY_CALLBACK_NONE:
+            break;
+
+        case NETPLAY_CALLBACK_CONNECTED:
+            printf("NetClientEE: Connected\n");
+            break;
+
+        case NETPLAY_CALLBACK_DISCONNECTED:
+            printf("NetClientEE: Disconnected\n");
+            break;
+
+        case NETPLAY_CALLBACK_LOADGAME:
+            {
+                Bool result = FALSE;
+
+                printf("NetClientEE: Loading the netgame %s\n", data);
+                if (size > 0)
+                {
+                    //  load here (no-sram)
+					result = _MainLoopExecuteFile(data, FALSE);
+                }
+
+                if (!result)
+                {
+                    NetPlayClientSendLoadAck(NETPLAY_LOADACK_ERROR);
+                }  else
+                {
+                    NetPlayClientSendLoadAck(NETPLAY_LOADACK_OK);
+                }
+            }
+            break;
+
+        case NETPLAY_CALLBACK_UNLOADGAME:
+            printf("NetClientEE: Unloading the netgame\n");
+            _MainLoopUnloadRom();
+            break;
+
+        case NETPLAY_CALLBACK_STARTGAME:
+            printf("NetClientEE: Starting the netgame\n");
+            _MenuEnable(FALSE);
+            break;
+
+        default:
+            printf("NetClientEE: Callback %d\n", eCallback);
+            break;
+
+    }
+	return NULL;
+}
+
 char *_MainLoop_NetConfigPaths[]=
 {
 	(char *)"mc0:/SNESticle/",

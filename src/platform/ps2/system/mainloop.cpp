@@ -207,8 +207,8 @@ NULL
 
 
 static void _MenuDraw();
-static void _MenuEnable(Bool bEnable);
-static void * _MainLoopNetCallback(NetPlayCallbackE eCallback, char *data, int size);
+ void _MenuEnable(Bool bEnable);
+void *_MainLoopNetCallback(NetPlayCallbackE eCallback, char *data, int size);
 void MainLoopRender();
 
 static void _MainLoopInputProcess(Uint32);
@@ -245,7 +245,7 @@ static void _MainLoopGetName(Char *pName, const Char *pPath)
 	strcpy(pName, pFileName);
 }
 
-static void _MainLoopUnloadRom()
+ void _MainLoopUnloadRom()
 {
 
     // stop recording if we are recording
@@ -422,7 +422,7 @@ static Bool _MainLoopLoadSnesPalette(const char *pFileName)
 	return _MainLoopReadBinaryData((Uint8 *)pPalData, SNPPUCOLOR_NUM * sizeof(Uint32), pFileName) > 0;
 }
 
-static Bool _MainLoopExecuteFile(const char *pFileName, Bool bLoadSRAM)
+ Bool _MainLoopExecuteFile(const char *pFileName, Bool bLoadSRAM)
 {
 	PathExtTypeE eType;
 	Emu::Rom *pRom = NULL;
@@ -824,64 +824,6 @@ typedef int (*CopyProgressCallBackT)(char *pDestName, char *pSrcName, int Positi
 
 int InstallFiles(char *pDestPath, char *pSrcPath, char **ppInstallFiles, CopyProgressCallBackT pCallBack);
 int CopyFile(char *pDest, char *pSrc, CopyProgressCallBackT pCallBack);
-
-static void *_MainLoopNetCallback(NetPlayCallbackE eCallback, char *data, int size)
-{
-    switch (eCallback)
-    {
-        case NETPLAY_CALLBACK_NONE:
-            break;
-
-        case NETPLAY_CALLBACK_CONNECTED:
-            printf("NetClientEE: Connected\n");
-            break;
-
-        case NETPLAY_CALLBACK_DISCONNECTED:
-            printf("NetClientEE: Disconnected\n");
-            break;
-
-        case NETPLAY_CALLBACK_LOADGAME:
-            {
-                Bool result = FALSE;
-
-                printf("NetClientEE: Loading the netgame %s\n", data);
-                if (size > 0)
-                {
-                    //  load here (no-sram)
-					result = _MainLoopExecuteFile(data, FALSE);
-                }
-
-                if (!result)
-                {
-                    NetPlayClientSendLoadAck(NETPLAY_LOADACK_ERROR);
-                }  else
-                {
-                    NetPlayClientSendLoadAck(NETPLAY_LOADACK_OK);
-                }
-            }
-            break;
-
-        case NETPLAY_CALLBACK_UNLOADGAME:
-            printf("NetClientEE: Unloading the netgame\n");
-            _MainLoopUnloadRom();
-            break;
-
-        case NETPLAY_CALLBACK_STARTGAME:
-            printf("NetClientEE: Starting the netgame\n");
-            _MenuEnable(FALSE);
-            break;
-
-        default:
-            printf("NetClientEE: Callback %d\n", eCallback);
-            break;
-
-    }
-	return NULL;
-}
-
-//
-//
-//
 
 Char _MainLoop_BootDir[256];
 
