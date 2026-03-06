@@ -54,14 +54,14 @@ public:
 
 	void ResetEntries();
 	void SortEntries();
-	void AddEntry(const Char *pName, BrowserEntryTypeE eType, Int32 size);
+	void AddEntry(Char *pName, BrowserEntryTypeE eType, Int32 size);
 
 	int GetEntryPath(char *pStr, int nChars);
 	Char *GetEntryName();
 	BrowserEntryTypeE GetEntryType();
 
-	void SetDir(const Char *pDir);
-	void Chdir(const Char *pSubDir);
+	void SetDir(Char *pDir);
+	void Chdir(Char *pSubDir);
 
 };
 

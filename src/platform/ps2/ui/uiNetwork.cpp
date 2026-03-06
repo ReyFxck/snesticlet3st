@@ -204,7 +204,7 @@ void _MenuPrintIPPort(int x, int y, unsigned ipaddr, unsigned port)
                     );
 }
 
-void _MenuPrintAlignLeft(int x, int y, const Char *str, Bool bHighlight = FALSE)
+void _MenuPrintAlignLeft(int x, int y, char *str, Bool bHighlight = FALSE)
 {    
     FontPuts(x , y, str);
     if (bHighlight)
@@ -214,7 +214,7 @@ void _MenuPrintAlignLeft(int x, int y, const Char *str, Bool bHighlight = FALSE)
     }
 }
 
-void _MenuPrintAlignRight(int x, int y, const Char *str, Bool bHighlight = FALSE)
+void _MenuPrintAlignRight(int x, int y, char *str, Bool bHighlight = FALSE)
 {    
     x-= FontGetStrWidth(str);
     FontPuts(x , y, str);
@@ -225,7 +225,7 @@ void _MenuPrintAlignRight(int x, int y, const Char *str, Bool bHighlight = FALSE
     }
 }
 
-void _MenuPrintAlignCenter(int x, int y, const Char *str, Bool bHighlight = FALSE)
+void _MenuPrintAlignCenter(int x, int y, char *str, Bool bHighlight = FALSE)
 {                
     x-= FontGetStrWidth(str) / 2;
     FontPuts(x, y, str);
@@ -238,40 +238,40 @@ void _MenuPrintAlignCenter(int x, int y, const Char *str, Bool bHighlight = FALS
 }
 
 
-static const char *m_DHCPStr[]=
+static char *m_DHCPStr[]=
 {
-    (char *)"disabled",   //  DHCP_DISABLED 0
-    (char *)"requesting", //  DHCP_REQUESTING 1
-    (char *)"init",       //  DHCP_INIT 2
-    (char *)"rebooting",  //  DHCP_REBOOTING 3
-    (char *)"rebinding",  //  DHCP_REBINDING 4
-    (char *)"renewing",   //  DHCP_RENEWING 5
-    (char *)"selecting",  //  DHCP_SELECTING 6
-    (char *)"informing",  //  DHCP_INFORMING 7
-    (char *)"checking",   //  DHCP_CHECKING 8
-    (char *)"permanent",  //  DHCP_PERMANENT 9
-    (char *)"bound",      //  DHCP_BOUND 10
-    (char *)"releasing",  //  DHCP_RELEASING 11 
-    (char *)"backingoff", //  DHCP_BACKING_OFF 12
-    (char *)"off",        //  DHCP_OFF 13
+    "disabled",   //  DHCP_DISABLED 0
+    "requesting", //  DHCP_REQUESTING 1
+    "init",       //  DHCP_INIT 2
+    "rebooting",  //  DHCP_REBOOTING 3
+    "rebinding",  //  DHCP_REBINDING 4
+    "renewing",   //  DHCP_RENEWING 5
+    "selecting",  //  DHCP_SELECTING 6
+    "informing",  //  DHCP_INFORMING 7
+    "checking",   //  DHCP_CHECKING 8
+    "permanent",  //  DHCP_PERMANENT 9
+    "bound",      //  DHCP_BOUND 10
+    "releasing",  //  DHCP_RELEASING 11 
+    "backingoff", //  DHCP_BACKING_OFF 12
+    "off",        //  DHCP_OFF 13
 };
 
 
-static const char *m_NetplayClientStatusStr[]=
+static char *m_NetplayClientStatusStr[]=
 {
-    (char *)"not connected",
-    (char *)"connecting",
-    (char *)"connected"
+    "not connected",
+    "connecting",
+    "connected"
 };
 
-static const char *m_NetplayServerStatusStr[]=
+static char *m_NetplayServerStatusStr[]=
 {
-    (char *)"idle",
-    (char *)"connecting",
-    (char *)"listening"
+    "idle",
+    "connecting",
+    "listening"
 };
 
-void _MenuHeader(int vy, const Char *str)
+void _MenuHeader(int vy, char *str)
 {
     PolyColor4f(0.0f, 0.2f, 0.2f, 0.5f); 
 	PolyRect(32, vy, 256-64, 9);
@@ -282,7 +282,7 @@ void _MenuHeader(int vy, const Char *str)
 
 void _MenuDrawEditIP(int x, int y, Int8 *pIP, int iDigit)
 {
-    const char *pFormat = "abc.def.ghi.jkl";
+    char *pFormat = "abc.def.ghi.jkl";
     char str[2];
 
     str[1] = 0;
@@ -312,7 +312,7 @@ void CNetworkScreen::Draw()
     t_ip_info configinfo;
     t_ip_info *config = NULL;
     memset(&configinfo, 0, sizeof(configinfo));
-    if (ps2ip_getconfig((char *)"sm1",&configinfo))
+    if (ps2ip_getconfig("sm1",&configinfo))
 	{
 		config = &configinfo;
 	}
