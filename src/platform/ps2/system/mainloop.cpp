@@ -17,6 +17,7 @@
 #include "mainloop_iop.h"
 #include "mainloop_net.h"
 #include "mainloop_ui.h"
+#include "mainloop_install.h"
 #include "types.h"
 #include "vram.h"
 #include "mainloop.h"
@@ -822,91 +823,6 @@ typedef int (*CopyProgressCallBackT)(char *pDestName, char *pSrcName, int Positi
 
 int InstallFiles(char *pDestPath, char *pSrcPath, char **ppInstallFiles, CopyProgressCallBackT pCallBack);
 int CopyFile(char *pDest, char *pSrc, CopyProgressCallBackT pCallBack);
-
-static int _MainLoopInstallCallback(char *pDestName, char *pSrcName, int Position, int Total)
-{
-	char str[256];
-	sprintf(str, "Copying %d / %d bytes", Position, Total);
-	_MainLoop_pMenuScreen->SetText(0, str);
-	_MainLoop_pMenuScreen->SetText(1, pSrcName);
-	_MainLoop_pMenuScreen->SetText(2, pDestName);
-	MainLoopRender();
-	return 1;
-}
-
-static void _DumpMemory()
-{
-	int fd;
-	fd = fioOpen("host:memdump.bin", O_WRONLY | O_CREAT);
-	if (fd >= 0)
-	{
-		fioWrite(fd, (void *)0x100000, 4 * 1024 * 1024);
-		fioClose(fd);
-	}
-}
-
-static void _GetExploitDir(char *pStr)
-{
-	int fd;
-	char code = 'A';
-	char romver[16];
-
-	// Determine the PS2's region.  
-	fd = fioOpen("rom0:ROMVER", O_RDONLY);
-	fioRead(fd, romver, sizeof romver);
-	fioClose(fd);
-	code  = (romver[4] == 'E' ? 'E' : (romver[4] == 'J' ? 'I' : 'A'));
-
-	sprintf(pStr, "B%cDATA-SYSTEM", code);
-}
-
-
-static void _AddTitleDB(char *pPath)
-{
-	FILE *pFile;
-	char str[256];
-
-	CDVD_FlushCache();
-
-	pFile = fopen("cdfs:/SYSTEM.CNF", "rt");
-//	pFile = fopen("host:/SYSTEM.CNF", "rt");
-	if (!pFile)
-	{
-		MainLoopModalPrintf(60*3, "Unable to open SYSTEM.CNF on cd.");
-		return;
-	}
-	while (fgets(str, sizeof(str), pFile))
-	{
-		if (!memcmp(str, "BOOT", 4))
-		{
-			char *pFileStart = strchr(str, '\\');
-			char *pFileEnd = strrchr(str, ';');
-
-			if (pFileStart)
-			{
-				// skip \ in path
-				pFileStart+=1;
-				if (pFileEnd) *pFileEnd='\0';
-				printf("Found '%s'\n", pFileStart);
-				fclose(pFile);
-
-				// add to title.db
-				if (add_title_db(pPath, pFileStart)==0)
-				{
-					MainLoopModalPrintf(60*3, "%s added to mc0:title.db", pFileStart);
-				} else
-				{
-					MainLoopModalPrintf(60*3, "Unable to add to %s", pPath);
-				}
-				fclose(pFile);
-				return;
-			}
-		}
-	}
-	fclose(pFile);
-
-	MainLoopModalPrintf(60*3, "Unable to find PSX ELF");
-}
 
 static int _MainLoopMenuEvent(Uint32 Type, Uint32 Parm1, void *Parm2)
 {

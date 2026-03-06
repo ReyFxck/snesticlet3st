@@ -97,3 +97,4 @@ src/platform/ps2/system/mainloop_state.cpp
 src/platform/ps2/system/mainloop_iop.cpp
 src/platform/ps2/system/mainloop_net.cpp
 src/platform/ps2/system/mainloop_ui.cpp
+src/platform/ps2/system/mainloop_install.cpp
