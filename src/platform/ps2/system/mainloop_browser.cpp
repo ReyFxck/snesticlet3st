@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "path.h"
+#include "pathext.h"
 #include "uiBrowser.h"
 #include "mainloop_browser.h"
 #include "mainloop_net.h"
