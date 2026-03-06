@@ -701,44 +701,6 @@ static void _MainLoopSetPalette(NesPalE eNesPal)
 
 /* UI_L1R1_CYCLE */
 /* UI_CYCLE_L1R1 */
-static int _MainLoopLogEvent(Uint32 Type, Uint32 Parm1, void *Parm2)
-{
-	return 0;
-}
-
-
-static const char *_MainLoopMenuEntries[]=
-{
-	(char *)"Copy cdrom0: -> mc0:",
-	(char *)"Copy cdrom0: -> mc1:",
-	(char *)"Copy host: -> mc0:",
-	(char *)"Copy mc0: -> mc1:",
-	(char *)"Copy mc1: -> mc0:",
-	(char *)"Copy mc0: -> host:",
-	(char *)"Dump memory -> host:",
-	(char *)"Add PSX CD to mc0:title.db",
-	(char *)"Dump mc0:title.db -> tty0:",
-	(char *)"Copy rom0:libsd -> host:",
-	NULL
-};
-
-
-char *_MainLoop_pInstallFiles[] =
-{
-	(char *)"BOOT.ELF", (char *)"BOOT.ELF",
-	(char *)"TITLE.DB", (char *)"TITLE.DB",
-	(char *)"ICON.SYS", (char *)"ICON.SYS",
-	(char *)"PS2IP.IRX", (char *)"PS2IP.IRX",
-	(char *)"PS2IPS.IRX", (char *)"PS2IPS.IRX",
-	(char *)"PS2LINK.IRX", (char *)"PS2LINK.IRX",
-	(char *)"PS2SMAP.IRX", (char *)"PS2SMAP.IRX",
-	(char *)"CDVD.IRX", (char *)"CDVD.IRX",
-	(char *)"SJPCM2.IRX", (char *)"SJPCM2.IRX",
-	(char *)"MCSAVE.IRX", (char *)"MCSAVE.IRX",
-	(char *)"NETPLAY.IRX", (char *)"NETPLAY.IRX",
-	NULL
-};
-
 typedef int (*CopyProgressCallBackT)(char *pDestName, char *pSrcName, int Position, int Total);
 
 int InstallFiles(char *pDestPath, char *pSrcPath, char **ppInstallFiles, CopyProgressCallBackT pCallBack);
