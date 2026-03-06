@@ -11,6 +11,9 @@
 #include "libxmtap.h"
 #include <libmc.h>
 #include <kernel.h>
+#include "mainloop_debug.h"
+#include "mainloop_shared.h"
+#include "mainloop_state.h"
 #include "types.h"
 #include "vram.h"
 #include "mainloop.h"
@@ -126,7 +129,7 @@ static class CMenuScreen *_MainLoop_pMenuScreen;
 static class CLogScreen *_MainLoop_pLogScreen;
 static CScreen *_MainLoop_pScreen = NULL;
 
-static SnesSystem *_pSnes;
+SnesSystem *_pSnes;
 static SnesRom	  *_pSnesRom;
 #if 0
 static NesSystem  *_pNes;
@@ -136,16 +139,16 @@ static NesDisk	  *_pNesFDSDisk;
 static Int32 _MainLoop_iDisk=0;
 static Bool _MainLoop_bDiskInserted=FALSE;
 #endif
-static Char _RomName[256];
+Char _RomName[256];
 
 #if MAINLOOP_MEMCARD
-static Char _SramPath[256] = "mc0:/SNESticle";
+Char _SramPath[256] = "mc0:/SNESticle";
 static Char  _MainLoop_SaveTitle[] = "SNESticle\nSNESticle";
 #else
-static Char _SramPath[256] = "host0:/cygdrive/d/emu/";
+Char _SramPath[256] = "host0:/cygdrive/d/emu/";
 #endif
 
-static Emu::System  *_pSystem;
+Emu::System  *_pSystem;
 
 static CRenderSurface *_fbTexture[2];
 static Uint32 _iframetex=0;
@@ -157,7 +160,7 @@ static CWavFile _WavFile;
 
 static Uint8 _RomData[4 * 1024 * 1024 + 1024] __attribute__((aligned(64))) __attribute__ ((section (".bss")));
 
-static SnesStateT		_SnesState;
+SnesStateT		_SnesState;
 #if 0
 static NesStateT		_NesState;
 #endif
@@ -165,11 +168,11 @@ static NesStateT		_NesState;
 static Emu::MovieClip *  s_pMovieClip;
 
 
-static Uint32 _MainLoop_SRAMChecksum;
-static Uint32 _MainLoop_SaveCounter = 0;
-static Uint32 _MainLoop_AutoSaveTime = 8 * 60;
-static Bool _MainLoop_SRAMUpdated = FALSE;
-static Bool _bStateSaved = FALSE;
+Uint32 _MainLoop_SRAMChecksum;
+Uint32 _MainLoop_SaveCounter = 0;
+Uint32 _MainLoop_AutoSaveTime = 8 * 60;
+Bool _MainLoop_SRAMUpdated = FALSE;
+Bool _bStateSaved = FALSE;
 static Float32 _MainLoop_fOutputIntensity = 0.8f;
 
 
@@ -265,51 +268,6 @@ void ScrPrintf(const Char *pFormat, ...)
 	MainLoopRender();
 }
 
-static Uint32 _PathCalcHash(const char *pStr)
-{
-	Uint32 hash = 0;
-	while (*pStr)
-	{
-		hash*=33;
-		hash += *pStr;
-		pStr++;
-	}
-	return hash;
-}
-
-void PathTruncFileName(Char *pOut, Char *pStr, Int32 nMaxChars)
-{
-	Uint32 hash;
-
-	hash = _PathCalcHash(pStr);
-
-	// copy string up to maxchars length
-	while (*pStr && nMaxChars > 0)
-	{
-		*pOut++ = *pStr++;
-		nMaxChars--;
-	}
-
-	// terminate
-	*pOut = 0;
-
-	if (nMaxChars <= 0)
-	{
-		// mangle end of name
-		sprintf(pOut - 3, "%03d", hash % 1000);
-	}
-}
-
-int PathGetMaxFileNameLength(const char *pPath)
-{
-	if (pPath[0] == 'm' && pPath[1]=='c')
-	{
-		return 32;
-	}
-	return 256;
-}
-
-
 static void _MainLoopGetName(Char *pName, const Char *pPath)
 {
 	const Char *pFileName;
@@ -325,219 +283,6 @@ static void _MainLoopGetName(Char *pName, const Char *pPath)
 	}
 	strcpy(pName, pFileName);
 }
-
-static Uint32 _CalcChecksum(Uint32 *pData, Uint32 nWords)
-{
-    Uint32 uSum =0;
-
-    while (nWords > 0)
-    {
-        uSum+= pData[0];
-
-        pData++;
-        nWords--;
-    }
-
-    return uSum;
-}
-
-                        
-static Bool _MainLoopHasSRAM()
-{
-	return  _pSystem ? (_pSystem->GetSRAMBytes() > 0) : FALSE;
-}
-
-
-static Bool _MainLoopSaveSRAM(Bool bSync)
-{
-    Int32 nSramBytes = _pSystem ? _pSystem->GetSRAMBytes() : 0;
-
-	if (nSramBytes > 0)
-	{
-		Char Path[1024];
-		Char SaveName[256];
-
-		Uint8 *pSRAM;
-		pSRAM = _pSystem->GetSRAMData();
-
-		PathTruncFileName(SaveName, _RomName, PathGetMaxFileNameLength(_SramPath) - 4);
-
-        snprintf(Path, sizeof(Path), "%s/%s.%s", _SramPath, SaveName, _pSystem->GetString(Emu::System::StringE::STRING_STATEEXT) );
-
-		MCSave_WriteSync(TRUE, NULL);
-		MCSave_Write((char *)Path, (char *)pSRAM, nSramBytes);
-
-		if (bSync)
-		{
-			int result;
-			MCSave_WriteSync(TRUE, &result);
-			return result ? TRUE : FALSE;
-		}
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-static void _MainLoopLoadSRAM()
-{
-    Int32 nSramBytes = _pSystem ? _pSystem->GetSRAMBytes() : 0;
-
-	if (nSramBytes > 0)
-	{
-		Char Path[1024];
-		Char SaveName[256];
-
-		Uint8 *pSRAM;
-		pSRAM = _pSystem->GetSRAMData();
-
-		PathTruncFileName(SaveName, _RomName, PathGetMaxFileNameLength(_SramPath) - 4);
-
-        snprintf(Path, sizeof(Path), "%s/%s.%s", _SramPath, SaveName, _pSystem->GetString(Emu::System::StringE::STRING_STATEEXT));
-
-		if (MemCardReadFile(Path, pSRAM, nSramBytes))
-		{
-            _MainLoop_SRAMChecksum = _CalcChecksum((Uint32 *)pSRAM, nSramBytes / 4);
-
-			ConPrint("SRAM loaded: %s\n", Path);
-		}
-
-        _MainLoop_SRAMUpdated = FALSE;
-	}
-
-	_MainLoop_SaveCounter = 0;
-    _bStateSaved = FALSE;
-}
-
-
-
-static Bool _MainLoopCheckSRAM()
-{
-    Int32 nSramBytes = _pSystem ? _pSystem->GetSRAMBytes() : 0;
-
-	if (nSramBytes > 0)
-	{
-        Uint8 *pSRAM = _pSystem->GetSRAMData();
-        Uint32 uChecksum;
-
-        PROF_ENTER("_MainLoopCheckSRAM");
-        uChecksum = _CalcChecksum((Uint32 *)pSRAM, nSramBytes / 4);
-
-        if (_MainLoop_SRAMChecksum!=uChecksum)
-        {
-            #if CODE_DEBUG
-            printf("SRAM changed!\n");
-            #endif
-
-            _MainLoop_SRAMUpdated = TRUE;
-            _MainLoop_SaveCounter = _MainLoop_AutoSaveTime;
-            _MainLoop_SRAMChecksum=uChecksum;
-        }
-
-        if (_MainLoop_SaveCounter > 0)
-        {
-            _MainLoop_SaveCounter--;
-            if (_MainLoop_SaveCounter==0)
-            {
-                _MainLoopSaveSRAM(FALSE);
-            }
-        }
-
-        PROF_LEAVE("_MainLoopCheckSRAM");
-    }
-	return TRUE;
-}
-
-
-
-void _MainLoopLoadState()
-{
-    Char Path[1024];
-
-
-/*
-    printf("%d\n", sizeof(_SnesState));
-    printf("SNStateCPUT		%d\n",sizeof(SNStateCPUT		));
-    printf("SNStatePPUT		%d\n",sizeof(SNStatePPUT		));
-    printf("SNStateIOT		%d\n",sizeof(SNStateIOT		    ));
-    printf("SNStateDMACT	%d\n",sizeof(SNStateDMACT	    ));
-    printf("SNStateSPCT		%d\n",sizeof(SNStateSPCT		));
-    printf("SNStateSPCDSPT  %d\n",sizeof(SNStateSPCDSPT     ));
-  */
-    if (!_pSystem) return;
-
-    if (_pSystem == _pSnes)
-    {
-	    snprintf(Path, sizeof(Path), "%s%s.sns", MAINLOOP_STATEPATH, _RomName);
-
-        if (FileReadMem(Path, &_SnesState, sizeof(_SnesState)))
-        {
-            _bStateSaved = TRUE;
-
-		    ConPrint("State loaded from %s\n", Path);
-        }
-
-        if (_bStateSaved)
-        {
-            _pSnes->RestoreState(&_SnesState);
-        }
-    } 
-#if 0		
-	else if (_pSystem == _pNes)
-    {
-	    sprintf(Path, "%s%s.nst", MAINLOOP_STATEPATH, _RomName);
-
-        if (FileReadMem(Path, &_NesState, sizeof(_NesState)))
-        {
-            _bStateSaved = TRUE;
-
-		    ConPrint("State loaded from %s\n", Path);
-        }
-
-        if (_bStateSaved)
-        {
-            _pNes->RestoreState(&_NesState);
-        }
-    }
-#endif
-
-}
-
-
-void _MainLoopSaveState()
-{
-    Char Path[1024];
-    if (!_pSystem) return;
-
-    if (_pSystem == _pSnes)
-    {
-	    snprintf(Path, sizeof(Path), "%s%s.sns", MAINLOOP_STATEPATH, _RomName);
-
-        _pSnes->SaveState(&_SnesState);
-        _bStateSaved = TRUE;
-
-
-        if (FileWriteMem(Path, &_SnesState, sizeof(_SnesState)))
-        {
-		    ConPrint("State saved to %s\n", Path);
-        }
-    } 
-#if 0	
-	else if (_pSystem == _pNes)
-    {
-	    sprintf(Path, "%s%s.nst", MAINLOOP_STATEPATH, _RomName);
-
-        _pNes->SaveState(&_NesState);
-        _bStateSaved = TRUE;
-
-        if (FileWriteMem(Path, &_NesState, sizeof(_NesState)))
-        {
-		    ConPrint("State saved to %s\n", Path);
-        }
-    }
-#endif	
-}
-
 
 static void _MainLoopUnloadRom()
 {
@@ -2062,7 +1807,7 @@ Bool MainLoopInit()
 	_MainLoop_pMenuScreen = new CMenuScreen();
 	_MainLoop_pMenuScreen->SetMsgFunc(_MainLoopMenuEvent);
 	_MainLoop_pMenuScreen->SetTitle("Install Menu");
-	_MainLoop_pMenuScreen->SetEntries(_MainLoopMenuEntries );
+	_MainLoop_pMenuScreen->SetEntries((char **)_MainLoopMenuEntries );
 
 
 	_MainLoopSetScreen(_MainLoop_pBrowserScreen);
@@ -2073,7 +1818,8 @@ Bool MainLoopInit()
 //	while (1);
 
 	// load snes palette
-	_MainLoopLoadSnesPalette("mc0:/SNESticle/default.snpal");
+	printf("[DBG] palette load desativado para teste\n");
+        //_MainLoopLoadSnesPalette("mc0:/SNESticle/default.snpal");
 
 	// load rom
 	_MainLoopExecuteFile(_pRomFile, TRUE);
