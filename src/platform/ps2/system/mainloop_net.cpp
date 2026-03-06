@@ -7,6 +7,7 @@
 #include "mainloop_debug.h"
 #include "mainloop_iop.h"
 #include "mainloop_net.h"
+#include "mainloop.h"
 
 extern Char _MainLoop_BootDir[];
 
@@ -15,12 +16,49 @@ extern void ScrPrintf(const Char *pFormat, ...);
 extern "C" {
 #include "ps2ip.h"
 #include "netplay_ee.h"
+#define MAINLOOP_NETPORT (6113)
+
 }
 
 
 extern Bool _MainLoopExecuteFile(const char *pFileName, Bool bLoadSRAM);
 extern void _MainLoopUnloadRom();
 extern void _MenuEnable(Bool bEnable);
+
+int _MainLoopNetworkEvent(Uint32 Type, Uint32 Parm1, void *Parm2)
+{
+    NetPlayRPCStatusT status;
+	switch (Type)
+	{
+		case 1:
+            printf("Connecting to %08X\n", Parm1);
+            NetPlayClientConnect(Parm1, MAINLOOP_NETPORT);
+			break;
+		case 2:
+            NetPlayGetStatus(&status);
+            if (status.eServerStatus == NETPLAY_STATUS_IDLE)
+            {
+               NetPlayServerStart(MAINLOOP_NETPORT, Parm1);
+               NetPlayClientConnect(0x0100007F, MAINLOOP_NETPORT);
+           }
+           else
+           NetPlayServerStop();
+			break;
+		case 3:
+            NetPlayGetStatus(&status);
+            if (status.eClientStatus == NETPLAY_STATUS_IDLE)
+            {
+				return 1;
+            } else
+            {
+                NetPlayClientDisconnect();
+				return 0;
+            }
+			break;
+	}
+
+	return 0;
+}
 
 void *_MainLoopNetCallback(NetPlayCallbackE eCallback, char *data, int size)
 {
