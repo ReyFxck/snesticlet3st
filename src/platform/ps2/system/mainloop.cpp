@@ -249,11 +249,6 @@ static void _MainLoopSetPalette(NesPalE eNesPal)
 
 /* UI_L1R1_CYCLE */
 /* UI_CYCLE_L1R1 */
-typedef int (*CopyProgressCallBackT)(char *pDestName, char *pSrcName, int Position, int Total);
-
-int InstallFiles(char *pDestPath, char *pSrcPath, char **ppInstallFiles, CopyProgressCallBackT pCallBack);
-int CopyFile(char *pDest, char *pSrc, CopyProgressCallBackT pCallBack);
-
 Char _MainLoop_BootDir[256];
 
 static char *_MainLoop_IOPModulePaths[]=
@@ -371,66 +366,6 @@ static void _MainLoopLoadModules(Char **ppSearchPaths)
 	}
 }
 
-int CopyFile(char *pDest, char *pSrc, CopyProgressCallBackT pCallBack)
-{
-	Uint8	Buffer[32*1024];
-	int fdSrc, fdDest;
-	int nTotalBytes=0;
-	int nBytes;
-	int nSrcSize;
-
-	fdSrc = fioOpen(pSrc, O_RDONLY);
-	if (fdSrc <= 0)
-	{
-		printf("Unable to open file %s\n", pSrc);
-		return -1;
-	}
-
-	// get file size
-	nSrcSize = fioLseek(fdSrc, 0, SEEK_END);
-	fioLseek(fdSrc, 0, SEEK_SET);
-
-	fdDest = fioOpen(pDest, O_WRONLY | O_CREAT);
-	if (fdDest <= 0)
-	{
-		fioClose(fdSrc);
-		printf("Unable to open file %s\n", pDest);
-		return -2;
-	}
-
-	do
-	{
-		if (pCallBack)
-			pCallBack(pDest, pSrc, nTotalBytes, nSrcSize);
-
-		nBytes = fioRead(fdSrc, Buffer, sizeof(Buffer));
-		if (nBytes > 0)
-		{
-			fioWrite(fdDest, Buffer, nBytes);
-			nTotalBytes += nBytes;
-		}
-	} while (nBytes > 0);
-
-	if (pCallBack)
-		pCallBack(pDest, pSrc, nTotalBytes, nSrcSize);
-
-	fioClose(fdSrc);
-	fioClose(fdDest);
-	printf("Copied %s->%s (%d bytes)\n", pSrc, pDest, nTotalBytes);	
-
-	fdDest = fioOpen(pDest, O_RDONLY);
-	if (fdDest > 0)
-	{
-		fioClose(fdDest);
-		return 0;
-	} else
-	{
-		printf("ERROR\n");	
-		return -3;
-	}
-}
-
-
 static Bool _bTrailingPath(const char *pStr)
 {
 	int len;
@@ -445,57 +380,6 @@ static Bool _bTrailingPath(const char *pStr)
 }
 
 				 //"mc0:/BADATA-SYSTEM"
-int InstallFiles(char *pDestPath, char *pSrcPath, char **ppInstallFiles, CopyProgressCallBackT pCallBack)
-{
-	Bool bTrailingDest;
-	Bool bTrailingSrc;
-
-	printf("InstallFiles %s -> %s\n", ppInstallFiles[0], ppInstallFiles[1]);
-
-	bTrailingSrc = _bTrailingPath(pSrcPath);
-	bTrailingDest = _bTrailingPath(pDestPath);
-
-	if (fioMkdir(pDestPath) < 0)
-	{
-		printf("Unable to create directory %s\n", pDestPath);
-	} 
-
-	while (*ppInstallFiles)
-	{
-		char DestPath[256];
-		char SrcPath[256];
-
-		printf("Installing %s -> %s\n", ppInstallFiles[0], ppInstallFiles[1]);
-
-		if (bTrailingSrc)
-		{
-			sprintf(SrcPath,  "%s%s", pSrcPath, ppInstallFiles[1]);
-		} else
-		{
-			sprintf(SrcPath,  "%s/%s", pSrcPath, ppInstallFiles[1]);
-		}
-
-		if (bTrailingDest)
-		{
-			sprintf(DestPath, "%s%s", pDestPath, ppInstallFiles[0]);
-		} else
-		{
-			sprintf(DestPath, "%s/%s", pDestPath, ppInstallFiles[0]);
-		}
-
-
-		if (CopyFile(DestPath, SrcPath, pCallBack) < 0)
-		{
-			//
-		}
-
-		ppInstallFiles+=2;
-	} 
-	return 0;
-}
-
-
-
 /*
 void InstallSNESticle()
 {
