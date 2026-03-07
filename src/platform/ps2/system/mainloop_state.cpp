@@ -16,6 +16,13 @@ int MCSave_WriteSync(int block, int *pResult);
 #include "mainloop_shared.h"
 #include "mainloop_state.h"
 
+extern Uint32 _uInputFrame;
+extern Uint32 _uInputChecksum[5];
+#if MAINLOOP_HISTORY
+extern Uint32 _nHistory;
+#endif
+
+
 #if CODE_RELEASE
 #define MAINLOOP_STATEPATH "host0:"
 #else
@@ -320,4 +327,19 @@ void _MainLoopSaveState()
         }
     }
 #endif
+}
+
+
+void _MainLoopResetHistory()
+{
+#if MAINLOOP_HISTORY
+    _nHistory = 0;
+#endif
+}
+
+
+void _MainLoopResetInputChecksums()
+{
+	_uInputFrame =0;
+	memset(_uInputChecksum, 0, sizeof(_uInputChecksum));
 }

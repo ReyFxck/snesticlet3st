@@ -11,3 +11,8 @@ void _MainLoopLoadSRAM();
 Bool _MainLoopCheckSRAM();
 void _MainLoopLoadState();
 void _MainLoopSaveState();
+Bool _MainLoopSaveSRAM(Bool bForce);
+#if MAINLOOP_HISTORY
+void _MainLoopResetHistory();
+#endif
+void _MainLoopResetInputChecksums();

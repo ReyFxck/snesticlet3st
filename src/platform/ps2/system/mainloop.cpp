@@ -203,10 +203,7 @@ void MainLoopRender();
 static void _MainLoopInputProcess(Uint32);
 
 #if MAINLOOP_HISTORY
-void _MainLoopResetHistory();
 #endif
-void _MainLoopResetInputChecksums();
-
 Bool _bMenu = TRUE;
 
 Char _MainLoop_ModalStr[256];
@@ -703,10 +700,6 @@ Uint32 _nHistory = 0;
 #endif
 
 #if MAINLOOP_HISTORY
-void _MainLoopResetHistory()
-{
-    _nHistory = 0;
-}
 #endif
 
 #if MAINLOOP_HISTORY
@@ -720,17 +713,8 @@ void _MainLoopSaveHistory()
 
 
 static Uint32 _uVblankCycle;
-static Uint32 _uInputFrame;
-static Uint32 _uInputChecksum[5];
-
-void _MainLoopResetInputChecksums()
-{
-	_uInputFrame =0;
-	memset(_uInputChecksum, 0, sizeof(_uInputChecksum));
-}
-
-
-
+Uint32 _uInputFrame;
+Uint32 _uInputChecksum[5];
 
 #if 1
 static Bool _ExecuteSnes(CRenderSurface *pSurface, CMixBuffer *pMixBuffer, Emu::SysInputT *pInput, Emu::System::ModeE eMode)
