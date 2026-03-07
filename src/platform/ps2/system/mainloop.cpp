@@ -591,11 +591,12 @@ void MainLoopRender()
     }
 
 	static Uint32 _iFrame=0;
+        static int whichdrawbuf = 0;
 
     // render frame
     GPPrimDisableZBuf();
 
-	if (!_MainLoop_BlackScreen)
+	if (!_MainLoop_BlackScreen && !_bMenu)
 	{
 //		Float32 fDestColor = (_bMenu || _MainLoop_ModalCount) ? 0.10f : 0.80f;
 		Float32 fDestColor = 0.10f;
@@ -780,8 +781,9 @@ void MainLoopRender()
     PROF_LEAVE("WaitVBlank");
 
     PROF_ENTER("GSSetCrt");
-    GS_SetCrtFB(0);
-    GS_SetDrawFB(0);
+    GS_SetCrtFB(whichdrawbuf);
+    whichdrawbuf ^= 1;
+    GS_SetDrawFB(whichdrawbuf);
     PROF_LEAVE("GSSetCrt");
 
     _iFrame++;
