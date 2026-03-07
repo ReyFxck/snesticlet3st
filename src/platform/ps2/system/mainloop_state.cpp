@@ -343,3 +343,17 @@ void _MainLoopResetInputChecksums()
 	_uInputFrame =0;
 	memset(_uInputChecksum, 0, sizeof(_uInputChecksum));
 }
+
+#if MAINLOOP_HISTORY
+Uint32 _History[16384 * 2];
+Uint32 _nHistory = 0;
+#endif
+
+#if MAINLOOP_HISTORY
+
+void _MainLoopSaveHistory()
+{
+    FileWriteMem("host:game.hst", _History, _nHistory * sizeof(Uint32));
+    printf("History written\n");
+}
+#endif

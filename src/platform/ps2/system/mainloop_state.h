@@ -16,3 +16,6 @@ Bool _MainLoopSaveSRAM(Bool bForce);
 void _MainLoopResetHistory();
 #endif
 void _MainLoopResetInputChecksums();
+#if MAINLOOP_HISTORY
+void _MainLoopSaveHistory();
+#endif

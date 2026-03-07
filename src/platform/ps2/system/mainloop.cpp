@@ -22,6 +22,7 @@
 #include "mainloop_browser.h"
 #include "mainloop_load.h"
 #include "mainloop_input.h"
+#include "mainloop_exec.h"
 #include "types.h"
 #include "vram.h"
 #include "mainloop.h"
@@ -150,7 +151,7 @@ static Uint32 _iframetex=0;
 
 TextureT _OutTex;
 #ifdef DEBUG
-static CWavFile _WavFile;
+CWavFile _WavFile;
 #endif
 
 Uint8 _RomData[4 * 1024 * 1024 + 1024] __attribute__((aligned(64))) __attribute__ ((section (".bss")));
@@ -196,12 +197,10 @@ NULL
 ;
 
 
-static void _MenuDraw();
- void _MenuEnable(Bool bEnable);
+void _MenuEnable(Bool bEnable);
 void *_MainLoopNetCallback(NetPlayCallbackE eCallback, char *data, int size);
+static void _MenuDraw();
 void MainLoopRender();
-
-static void _MainLoopInputProcess(Uint32);
 
 #if MAINLOOP_HISTORY
 #endif
@@ -213,8 +212,8 @@ Int32 _MainLoop_ModalCount=0;
 Char _MainLoop_StatusStr[256];
 Int32 _MainLoop_StatusCount=0;
 
-static Bool _MainLoop_BlackScreen = FALSE;
-static Uint32 _MainLoop_uDebugDisplay = 0;
+Bool _MainLoop_BlackScreen = FALSE;
+Uint32 _MainLoop_uDebugDisplay = 0;
 
 extern "C" {
 #include "unzip.h"
@@ -525,10 +524,6 @@ static Uint16 _MainLoopNesInput(Uint32 cond)
 	return pad;
 }
 #endif
-#if MAINLOOP_SNESSTATEDEBUG
-static SnesStateT _TestState[3];
-#endif
-
 #if MAINLOOP_NESSTATEDEBUG
 static NesStateT _NesTestState[3];
 #endif
@@ -536,100 +531,13 @@ static NesStateT _NesTestState[3];
 //extern Bool bStateDebug;
 
 #if MAINLOOP_HISTORY
-Uint32 _History[16384 * 2];
-Uint32 _nHistory = 0;
 #endif
-
-#if MAINLOOP_HISTORY
-#endif
-
-#if MAINLOOP_HISTORY
-
-void _MainLoopSaveHistory()
-{
-    FileWriteMem("host:game.hst", _History, _nHistory * sizeof(Uint32));
-    printf("History written\n");
-}
-#endif
-
 
 static Uint32 _uVblankCycle;
 Uint32 _uInputFrame;
 Uint32 _uInputChecksum[5];
 
 #if 1
-static Bool _ExecuteSnes(CRenderSurface *pSurface, CMixBuffer *pMixBuffer, Emu::SysInputT *pInput, Emu::System::ModeE eMode)
-{
-
-        #if !TESTASM  
-
-            #if !MAINLOOP_SNESSTATEDEBUG
-//            pMixBuffer=NULL;
-//            SNCPUSetExecuteFunc(SNCPUExecute_C);
-            SNCPUSetExecuteFunc(SNCPUExecute_ASM);
-            SNSPCSetExecuteFunc(SNSPCExecute_C);
-
-		    PROF_ENTER("SnesExecuteFrame");
-  		    _pSystem->ExecuteFrame(pInput, pSurface, pMixBuffer, eMode);
-		    PROF_LEAVE("SnesExecuteFrame");
-            #else
-
-			if (_pSnes->GetFrame() > 50*60)
-			{
-            	SNCPUSetExecuteFunc(SNCPUExecute_C);
-				_pSnes->SaveState(&_TestState[0]);
-				_pSnes->ExecuteFrame(pInput, pSurface, NULL);
-				_pSnes->SaveState(&_TestState[1]);
-
-
-            	SNCPUSetExecuteFunc(SNCPUExecute_ASM);
-				_pSnes->RestoreState(&_TestState[0]);
-				_pSnes->ExecuteFrame(pInput, pSurface, NULL);
-				_pSnes->SaveState(&_TestState[2]);
-
-				if (memcmp(&_TestState[1], &_TestState[2],sizeof(SnesStateT)))
-				{
-					printf("State fault (frame= %d)\n", _pSnes->GetFrame());
-            	    SNStateCompare(&_TestState[1],&_TestState[2]);
-
-            	    FileWriteMem("host0:c:/emu/fault.sns", &_TestState[0], sizeof(_TestState[0]));
-
-
-            	   
-					printf("Resuming frame...\n");
-
-//          	      bStateDebug = TRUE;
-
-            	    SNCPUSetExecuteFunc(SNCPUExecute_C);
-    				_pSnes->RestoreState(&_TestState[0]);
-				    _pSnes->ExecuteFrame(pInput, pSurface, NULL);
-
-            	    SNCPUSetExecuteFunc(SNCPUExecute_ASM);
-				    _pSnes->RestoreState(&_TestState[0]);
-				    _pSnes->ExecuteFrame(pInput, pSurface, NULL);
-
-            	    while (1);
-
-				}
-			} else
-			{
-	            SNCPUSetExecuteFunc(SNCPUExecute_C);
-	            SNSPCSetExecuteFunc(SNSPCExecute_C);
-
-			    PROF_ENTER("SnesExecuteFrame");
-	  		    _pSystem->ExecuteFrame(pInput, pSurface, pMixBuffer);
-			    PROF_LEAVE("SnesExecuteFrame");
-			}
-            #endif
-
-
-//  		    _pSnes->ExecuteFrame(&Input, NULL, &_SJPCMMix);
-//  		    _pSnes->ExecuteFrame(&Input, pSurface, NULL);
-        #endif
-
-    return TRUE;
-}
-
 extern "C" {
 //#include "ncpu_c.h"
 };
@@ -1145,333 +1053,6 @@ void _MenuEnable(Bool bEnable)
 //    	SjPCM_Clearbuff();
 	}
 }
-
-#define MENU_REPEAT (16)
-
-//#define MENU_REPEATBUTTONS (PAD_UP|PAD_DOWN|PAD_SQUARE|PAD_CIRCLE)
-#define MENU_REPEATBUTTONS (PAD_UP|PAD_DOWN|PAD_SQUARE|PAD_CIRCLE|PAD_CROSS|PAD_TRIANGLE|PAD_LEFT|PAD_RIGHT)
-
-static void _MainLoopInputProcess(Uint32 buttons)
-{
-	static Uint32 lastbuttons= ~0;
-	static Uint32 repeat=0;
-	Uint32 trigger;
-
-
-	if (!(buttons& MENU_REPEATBUTTONS))
-	{
-		repeat=0;
-	}
-
-	// 
-	repeat++;
-	if (repeat > MENU_REPEAT)
-	{
-		repeat -= 1;
-		lastbuttons &= ~MENU_REPEATBUTTONS;
-	}
-
-	trigger = ((buttons ^ lastbuttons) & buttons);
-	lastbuttons = buttons;
-
-#if 1
-	if (trigger & PAD_R3)
-	{
-        #if PROF_ENABLED
-		ProfStartProfile(1);
-        #endif
-//		BMPWriteFile("/pc/mnt/c/out.bmp", &_fbTexture[0]);
-	}
-
-
-
-
-
-    #ifdef DEBUG // CODE_DEBUG
-	if (trigger & PAD_L2)
-	{
-        if (_WavFile.IsOpen())
-        {
-            _WavFile.Close();
-            printf("WavOut Closed\n");
-        } else
-        {
-        /*
-            if (!_WavFile.Open(_pSnesWavFileName, 32000, 16, 2))
-            {
-                 printf("WavOut Open\n");
-            }
-            */
-            if (!_WavFile.Open(_pSnesWavFileName, 48000, 16, 2))
-            {
-                 printf("WavOut Open\n");
-            }
-
-        }
-//		BMPWriteFile("/pc/mnt/c/out.bmp", &_fbTexture[0]);
-	}
-    #endif
-
-
-    #ifdef DEBUG // CODE_DEBUG
-	if (buttons & PAD_L2)
-	{
-        if (trigger&PAD_CROSS)
-            _MainLoopSaveState();
-        if (trigger&PAD_CIRCLE)
-            _MainLoopLoadState();
-        if (trigger&PAD_TRIANGLE)
-		{
-            _MainLoop_uDebugDisplay++;
-            _MainLoop_uDebugDisplay&=3;
-		}
-
-        if (trigger&PAD_L3)
-		{
-			
-	        // stop recording if we are recording
-	        if (s_pMovieClip->IsRecording())
-	        {
-	            printf("Movie: Record End\n");
-	            s_pMovieClip->RecordEnd();
-	        } else
-	        // stop playing if we are playing
-	        if (s_pMovieClip->IsPlaying())
-	        {
-	            printf("Movie: Play End\n");
-	            s_pMovieClip->PlayEnd();
-	        } else
-
-	        if (_pSystem)
-	        {
-	            s_pMovieClip->RecordBegin(_pSystem);
-	            printf("Movie: Record Begin\n");
-	        }
-		}
-
-        if (trigger&PAD_R3)
-		{
-	        // stop recording if we are recording
-	        if (s_pMovieClip->IsRecording())
-	        {
-	            printf("Movie: Record End\n");
-	            s_pMovieClip->RecordEnd();
-	        } 
-
-	        // stop playing if we are playing
-	        if (s_pMovieClip->IsPlaying())
-	        {
-	            printf("Movie: Play End\n");
-	            s_pMovieClip->PlayEnd();
-	        } 
-	        if (_pSystem)
-	        {
-	            s_pMovieClip->PlayBegin(_pSystem);
-	            printf("Movie: Play Begin\n");
-	        }
-		}
-
-    }
-
-			/*
-	if (buttons & PAD_R2)
-	{
-		if (buttons & PAD_SQUARE)
-		{
-        if (trigger&PAD_LEFT)
-			_ColorCalib.i_mul-=0.1f;
-        if (trigger&PAD_RIGHT)
-			_ColorCalib.i_mul+=0.1f;
-        if (trigger&PAD_UP)
-			_ColorCalib.i_add+=0.005f;
-        if (trigger&PAD_DOWN)
-			_ColorCalib.i_add-=0.005f;
-		}
-
-		if (buttons & PAD_CROSS)
-		{
-        if (trigger&PAD_LEFT)
-			_ColorCalib.q_mul-=0.01f;
-        if (trigger&PAD_RIGHT)
-			_ColorCalib.q_mul+=0.01f;
-        if (trigger&PAD_UP)
-			_ColorCalib.q_add+=0.005f;
-        if (trigger&PAD_DOWN)
-			_ColorCalib.q_add-=0.005f;
-		}
-
-		if (buttons & PAD_CIRCLE)
-		{
-        if (trigger&PAD_LEFT)
-			_ColorCalib.y_mul-=0.01f;
-        if (trigger&PAD_RIGHT)
-			_ColorCalib.y_mul+=0.01f;
-        if (trigger&PAD_UP)
-			_ColorCalib.y_add+=0.005f;
-        if (trigger&PAD_DOWN)
-			_ColorCalib.y_add-=0.005f;
-		}
-
-		SNPPUBlendGS::ColorCalibrate(&_ColorCalib);
-    }
-
-			  */
-
-
-
-    #endif
-
-
-	#if 0
-	if (
-	 	((trigger & PAD_R2) && (buttons & PAD_L2)) ||
-	 	((trigger & PAD_L2) && (buttons & PAD_R2)) 
-	   )
-	{
-		// toggle menu
-		 _MenuEnable(!_bMenu);
-		 return;
-	}
-	#endif
-
-	static int _MenuTriggerTimeout[2] = {0,0};
-
-	if (trigger & PAD_L2)
-	{
-		_MenuTriggerTimeout[0]=5;
-	}
-
-	if (trigger & PAD_R2)
-	{
-		_MenuTriggerTimeout[1]=5;
-	}
-
-
-	if (_MenuTriggerTimeout[0] > 0)
-	{
-		if (trigger & PAD_R2)
-		{
-			_MenuTriggerTimeout[0] = 0;
-			 // toggle menu
-			 _MenuEnable(!_bMenu);
-			 return;
-		}
-		_MenuTriggerTimeout[0]--;
-	}
-
-	if (_MenuTriggerTimeout[1] > 0)
-	{
-		if (trigger & PAD_L2)
-		{
-			_MenuTriggerTimeout[1] = 0;
-			 // toggle menu
-			 _MenuEnable(!_bMenu);
-			 return;
-		}
-		_MenuTriggerTimeout[1]--;
-	}
-
-
-	if (_bMenu)
-	{
-		if (_MainLoop_pScreen)
-		{
-		    if (trigger & PAD_R1)
-		    {
-				if (_MainLoop_pScreen == _MainLoop_pBrowserScreen)
-					_MainLoopSetScreen(_MainLoop_pNetworkScreen);
-				 else
-				if (_MainLoop_pScreen == _MainLoop_pNetworkScreen)
-					_MainLoopSetScreen(_MainLoop_pMenuScreen);
-				 else
-				if (_MainLoop_pScreen == _MainLoop_pMenuScreen)
-					_MainLoopSetScreen(_MainLoop_pBrowserScreen);
-				else
-					_MainLoopSetScreen(_MainLoop_pBrowserScreen);
-		    } else
-
-		    if (trigger & PAD_L1)
-		    {
-				if (_MainLoop_pScreen == _MainLoop_pBrowserScreen)
-					_MainLoopSetScreen(_MainLoop_pBrowserScreen);
-				 else
-				if (_MainLoop_pScreen == _MainLoop_pNetworkScreen)
-					_MainLoopSetScreen(_MainLoop_pBrowserScreen);
-				 else
-				if (_MainLoop_pScreen == _MainLoop_pMenuScreen)
-					_MainLoopSetScreen(_MainLoop_pNetworkScreen);
-				else
-				if (_MainLoop_pScreen == _MainLoop_pLogScreen)
-					_MainLoopSetScreen(_MainLoop_pMenuScreen);
-		    } else
-			{
-				_MainLoop_pScreen->Input(buttons, trigger);
-			}
-		}
-
-	}
-	else
-	{
-
-		if (buttons & PAD_L2)
-		{
-			if (trigger & PAD_SELECT)
-			{
-				_MainLoop_BlackScreen^=1;
-			}
-		}
-
-#if 0
-		// perform cheesy non-deterministic disk switching
-		if (trigger & (PAD_R1|PAD_L1) )
-		{
-			if (_pNesFDSDisk->IsLoaded())
-			{
-				if (_MainLoop_bDiskInserted)
-				{
-					// eject disk!
-					_MainLoop_bDiskInserted = FALSE;
-					_pNes->GetMMU()->InsertDisk(-1);
-
-					MainLoopStatusPrintf(60, "NESFDS Disk Ejected");
-
-					// pick next disk
-					if (trigger & PAD_R1)
-						_MainLoop_iDisk++;
-					else
-						_MainLoop_iDisk--;
-				} else
-				{
-					// wrap the number of disks
-					if (_MainLoop_iDisk < 0)
-					{
-						_MainLoop_iDisk = _pNesFDSDisk->GetNumDisks()-1;
-					}
-
-					if (_MainLoop_iDisk >= _pNesFDSDisk->GetNumDisks())
-					{
-						_MainLoop_iDisk = 0;
-					}
-					// insert disk
-					_pNes->GetMMU()->InsertDisk(_MainLoop_iDisk);
-					_MainLoop_bDiskInserted = TRUE;
-
-
-					MainLoopStatusPrintf(60, "NESFDS Disk %d Inserted", _MainLoop_iDisk);
-				}
-			}
-		}
-#endif
-
-	}
-#endif
-}
-
-
-
-
-
-
 
 #if MAINLOOP_HISTORY
     if (trigger & PAD_L3)
