@@ -13,3 +13,4 @@ Bool _MainLoopLoadBios(Emu::Rom *pRom, const Char *pFilePath);
 Bool _MainLoopLoadSnesPalette(const char *pFileName);
 void _MainLoopUnloadRom();
 Bool _MainLoopExecuteFile(const char *pFileName, Bool bLoadSRAM);
+void _MainLoopSetSampleRate(Uint32 uSampleRate);

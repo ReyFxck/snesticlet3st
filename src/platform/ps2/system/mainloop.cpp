@@ -173,7 +173,7 @@ Float32 _MainLoop_fOutputIntensity = 0.8f;
 static Uint8 _MainLoop_GfxPipe[0x40000] _ALIGN(128) __attribute__ ((section (".bss")));
 
 //static SJPCMMixBuffer _SJPCMMix(32000, TRUE) _ALIGN(16);
-static SJPCMMixBuffer *_SJPCMMix;
+SJPCMMixBuffer *_SJPCMMix;
 
 //static Char * _pSnesWavFileName = "host0:d:/snesps2.wav";
 
@@ -215,8 +215,6 @@ Int32 _MainLoop_StatusCount=0;
 static Bool _MainLoop_BlackScreen = FALSE;
 static Uint32 _MainLoop_uDebugDisplay = 0;
 
-void _MainLoopSetSampleRate(Uint32 uSampleRate);
-
 extern "C" {
 #include "unzip.h"
 };
@@ -246,20 +244,7 @@ static void _MainLoopSetPalette(NesPalE eNesPal)
 
 /* UI_L1R1_CYCLE */
 /* UI_CYCLE_L1R1 */
-static Bool _bTrailingPath(const char *pStr)
-{
-	int len;
-	char cLastChar;
-	len = strlen(pStr);
-	if (len <= 0)
-	{
-		return TRUE;
-	}
-	cLastChar = pStr[len-1];
-	return (cLastChar == '/' || cLastChar=='\\' || cLastChar==':');
-}
-
-				 //"mc0:/BADATA-SYSTEM"
+//"mc0:/BADATA-SYSTEM"
 /*
 void InstallSNESticle()
 {
@@ -561,12 +546,6 @@ static Uint16 _MainLoopNesInput(Uint32 cond)
 	return pad;
 }
 #endif
-void _MainLoopSetSampleRate(Uint32 uSampleRate)
-{
-    _SJPCMMix->SetSampleRate(uSampleRate);
-}
-
-
 #if MAINLOOP_SNESSTATEDEBUG
 static SnesStateT _TestState[3];
 #endif

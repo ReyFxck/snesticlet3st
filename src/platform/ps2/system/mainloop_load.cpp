@@ -15,6 +15,7 @@
 #include "snes.h"
 #include "rendersurface.h"
 #include "texture.h"
+#include "sjpcmbuffer.h"
 #include "emumovie.h"
 #include "mainloop_load.h"
 #include "zlib.h"
@@ -25,8 +26,8 @@ extern TextureT _OutTex;
 extern Uint8 _RomData[4 * 1024 * 1024 + 1024];
 extern Emu::MovieClip *s_pMovieClip;
 extern Float32 _MainLoop_fOutputIntensity;
+extern SJPCMMixBuffer *_SJPCMMix;
 
-void _MainLoopSetSampleRate(Uint32 uSampleRate);
 void _MainLoopResetInputChecksums();
 #if MAINLOOP_HISTORY
 void _MainLoopResetHistory();
@@ -470,4 +471,9 @@ Bool _MainLoopExecuteFile(const char *pFileName, Bool bLoadSRAM)
 	}
 #endif
 	return TRUE;
+}
+
+void _MainLoopSetSampleRate(Uint32 uSampleRate)
+{
+    _SJPCMMix->SetSampleRate(uSampleRate);
 }
