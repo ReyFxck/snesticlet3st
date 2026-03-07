@@ -101,3 +101,4 @@ src/platform/ps2/system/mainloop_install.cpp
 src/platform/ps2/system/mainloop_menu.cpp
 src/platform/ps2/system/mainloop_browser.cpp
 src/platform/ps2/system/mainloop_load.cpp
+src/platform/ps2/system/mainloop_input.cpp
