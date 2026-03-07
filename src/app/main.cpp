@@ -168,9 +168,9 @@ static int MainExecModuleFile(const char *path)
     int mod_res = 0;
     int ret = SifExecModuleFile(path, 0, NULL, &mod_res);
     if (ret < 0) {
-        printf("[IRX] FAIL %s (ret=%d)\n", path, ret);
+        // printf("[IRX] FAIL %s (ret=%d)\n", path, ret);
     } else {
-        printf("[IRX] OK   %s (id=%d, start=%d)\n", path, ret, mod_res);
+        // printf("[IRX] OK   %s (id=%d, start=%d)\n", path, ret, mod_res);
     }
     return ret;
 }
@@ -217,7 +217,7 @@ static void MainLoadIrxFromBootDir(void)
     const char *dir = MainGetBootDir();
 
     MainEnsureIopServicesReady();
-    printf("[IRX] BootDir: %s\n", dir ? dir : "(null)");
+    // printf("[IRX] BootDir: %s\n", dir ? dir : "(null)");
 
     // base / util
     MainLoadIrxFromBootDirOne("ioptrap.irx");
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
 
     for (iArg=0; iArg < argc; iArg++)
     {
-        printf("%d: %s\n", iArg, argv[iArg]);
+        // printf("%d: %s\n", iArg, argv[iArg]);
     }
 
 	DmaReset();

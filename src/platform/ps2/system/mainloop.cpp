@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define MENU_STARTDIR ""
+#define MENU_STARTDIR _MainLoop_MenuStartDir
 #define NEWLIB_PORT_AWARE
 #include <fileio.h>
 #include <iopheap.h>
@@ -136,6 +136,7 @@ static Int32 _MainLoop_iDisk=0;
 static Bool _MainLoop_bDiskInserted=FALSE;
 #endif
 Char _RomName[256];
+static Char _MainLoop_MenuStartDir[] = "";
 
 #if MAINLOOP_MEMCARD
 Char _SramPath[256] = "mc0:/SNESticle";
@@ -595,7 +596,6 @@ void MainLoopRender()
     }
 
 	static Uint32 _iFrame=0;
-	static int whichdrawbuf = 0;
 
     // render frame
     GPPrimDisableZBuf();
@@ -805,26 +805,7 @@ Bool MainLoopProcess()
 
     PROF_ENTER("InputProcess");
     InputPoll();
-    /* UI_L1R1_PROCESS */
-    {
-        static Uint32 _prev = 0;
-        Uint32 now = InputGetPadData(0);
-        Uint32 pressed = now & ~_prev;
-        _prev = now;
-        if (pressed & PAD_L1) _UICycle(-1);
-        if (pressed & PAD_R1) _UICycle(+1);
-    }
 
-    /* UI_CYCLE_L1R1_PROCESS */
-    {
-        static Uint32 s_prev = 0;
-        Uint32 now = InputGetPadData(0);
-        Uint32 pressed = now & ~s_prev;
-        s_prev = now;
-
-        if (pressed & PAD_L1) _MainLoopCycleScreen(-1);
-        if (pressed & PAD_R1) _MainLoopCycleScreen(+1);
-    }
     PROF_LEAVE("InputProcess");
 
 
