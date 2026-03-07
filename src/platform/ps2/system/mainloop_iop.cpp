@@ -1,3 +1,5 @@
+#include "mainloop_net.h"
+#include "mainloop_load.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +38,12 @@
 #include "snstate.h"
 #include "sjpcmbuffer.h"
 #include "memcard.h"
+
+extern Char _SramPath[256];
+extern Char _MainLoop_SaveTitle[];
+extern Char *_MainLoop_NetConfigPaths[];
+extern void *_MainLoopNetCallback(NetPlayCallbackE eCallback, char *data, int size);
+
 #include "pathext.h"
 #include "snppucolor.h"
 #if 0
@@ -196,5 +204,121 @@ Int32 IOPLoadModule(const Char *pModuleName, Char **ppSearchPaths, int arglen, c
 
     	// module not loaded
     	return -1;
+	}
+}
+
+Char _MainLoop_BootDir[256];
+
+Char *_MainLoop_IOPModulePaths[]=
+{
+	_MainLoop_BootDir,
+    (char *)"host:",
+    (char *)"cdrom:\\",
+    (char *)"rom0:",
+    NULL
+};
+
+void _MainLoopLoadModules(Char **ppSearchPaths)
+{
+	Bool bLoadedNetwork;
+
+	#if 0
+	if (!EEPuts_Init())
+	{
+		EEPuts_SetCallback(_MainLoop_Puts);
+		IOPLoadModule("EEPUTS.IRX", ppSearchPaths, 0, NULL);
+	}
+	#endif
+
+//    IOPLoadModule("rom0:SECRMAN", NULL, 0, NULL);
+
+	if (IOPLoadModule("rom0:XSIO2MAN", NULL, 0, NULL) >= 0)
+	{
+		// use the X version of the iop libs
+	    if (IOPLoadModule("rom0:XMTAPMAN", NULL, 0, NULL) >= 0)
+		{
+			xmtapInit(0);
+			xmtapPortOpen(1,0);
+		}
+	    if (IOPLoadModule("rom0:XPADMAN", NULL, 0, NULL) >= 0)
+	    {
+	        xpadInit(0);
+			InputInit(TRUE);
+	    }
+
+	    IOPLoadModule("rom0:XMCMAN", NULL, 0, NULL);
+	    if (IOPLoadModule("rom0:XMCSERV", NULL, 0, NULL) >= 0)
+		{
+			MemCardInit();
+			#if MAINLOOP_MEMCARD
+			MemCardCreateSave(_SramPath, _MainLoop_SaveTitle, TRUE);
+			#endif
+		}
+	} else
+	{
+		// use the regular versions
+	    IOPLoadModule("rom0:SIO2MAN", NULL, 0, NULL);
+	    if (IOPLoadModule("rom0:PADMAN", NULL, 0, NULL) >= 0)
+	    {
+	        padInit(0);
+			InputInit(FALSE);
+	    }
+
+	    IOPLoadModule("rom0:MCMAN", NULL, 0, NULL);
+	    if (IOPLoadModule("rom0:MCSERV", NULL, 0, NULL) >= 0)
+		{
+			MemCardInit();
+			#if MAINLOOP_MEMCARD
+			MemCardCreateSave(_SramPath, _MainLoop_SaveTitle, TRUE);
+			#endif
+		}
+	}
+
+	bLoadedNetwork = _MainLoopInitNetwork(ppSearchPaths);
+
+	// configure network if we started it ourselves
+	if (bLoadedNetwork)
+	{
+		_MainLoopConfigureNetwork(_MainLoop_NetConfigPaths, (char *)"ipconfig.dat");
+	}
+
+	// load netplay module
+    if (IOPLoadModule("NETPLAY.IRX", ppSearchPaths, 0, NULL) >= 0)
+    {
+        NetPlayInit((void *)_MainLoopNetCallback);
+    }
+
+    if (IOPLoadModule("CDVD.IRX", ppSearchPaths, 0, NULL) >= 0)
+    {
+        printf("CDVD_Init()\n");
+        CDVD_Init();
+    }
+
+	if (IOPLoadModule("rom0:LIBSD", NULL, 0, NULL) < 0)
+	{
+    	IOPLoadModule("LIBSD.IRX", ppSearchPaths, 0, NULL);
+	}
+
+    if (IOPLoadModule("SJPCM2.IRX", ppSearchPaths, 0, NULL) >= 0)
+    {
+        printf("SjPCM_Init()\n");
+	    if(SjPCM_Init(0, 960*25, SJPCMMIXBUFFER_MAXENQUEUE) < 0) printf("Could not initialize SjPCM\n");
+
+    //    SjPCM_Setvol(0x3FF);
+    //    SjPCM_Setvol(0);
+    }
+
+	#if 1
+    if (IOPLoadModule("MCSAVE.IRX", ppSearchPaths, 0, NULL) >= 0)
+    {
+        printf("MCSave_Init()\n");
+        MCSave_Init(MAINLOOP_MAXSRAMSIZE);
+    }
+	#endif
+
+	if (bLoadedNetwork)
+	{
+		// try to load ps2link so we can have host i/o back
+	    IOPLoadModule("PS2LINK.IRX", ppSearchPaths, 0, NULL);
 	}
 }
