@@ -7,8 +7,8 @@ OBJ_DIR := $(CURDIR)/build
 PKG_DIR := $(OBJ_DIR)/pkg
 TARGET  := $(OBJ_DIR)/SNESticle.elf
 
-EE_CC    ?= ee-gcc
-EE_CXX   ?= ee-g++
+EE_CC  ?= $(shell command -v ee-gcc 2>/dev/null || command -v mips64r5900el-ps2-elf-gcc 2>/dev/null)
+EE_CXX ?= $(shell command -v ee-g++ 2>/dev/null || command -v mips64r5900el-ps2-elf-g++ 2>/dev/null)
 EE_STRIP ?= ee-strip
 
 LEGACY_ROOT ?= /root/SNESticle-Beta
